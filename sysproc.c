@@ -91,12 +91,39 @@ sys_uptime(void)
   return xticks;
 }
 
-int
+int 
 sys_acquireTest(void) {
   struct spinLockReentrant lk;
   initReentrantSpinlock(&lk, "splinlock");
   acquireReentrant(&lk);
   acquireReentrant(&lk);
   releaseReentrant(&lk);
+  return 0;
+}
+
+#define PROCESS_NUMBER  2
+
+int waiting_process_pids[PROCESS_NUMBER];
+int ind = 0;
+
+int wakeup_all_processes()
+{
+  for (int i = 0; i<PROCESS_NUMBER; i++)
+    wakeup_process(waiting_process_pids[i]);
+  return 0;
+}
+
+
+int
+sys_barrier(void) {
+  waiting_process_pids[ind] = myproc()->pid;
+  ind++;
+  sleep_process(myproc()->pid);
+  cprintf("%d\n", myproc()->pid);
+  if (ind == PROCESS_NUMBER)
+  {
+    wakeup_all_processes();
+    ind = 0;
+  }
   return 0;
 }
