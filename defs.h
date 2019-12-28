@@ -6,6 +6,7 @@ struct pipe;
 struct proc;
 struct rtcdate;
 struct spinlock;
+struct spinLockReentrant;
 struct sleeplock;
 struct stat;
 struct superblock;
@@ -126,10 +127,13 @@ void            swtch(struct context**, struct context*);
 
 // spinlock.c
 void            acquire(struct spinlock*);
+void            acquireReentrant(struct spinLockReentrant*);
 void            getcallerpcs(void*, uint*);
 int             holding(struct spinlock*);
 void            initlock(struct spinlock*, char*);
+void            initReentrantSpinlock (struct spinLockReentrant*, char*);
 void            release(struct spinlock*);
+void            releaseReentrant(struct spinLockReentrant*);
 void            pushcli(void);
 void            popcli(void);
 

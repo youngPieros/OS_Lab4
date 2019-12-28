@@ -17,6 +17,12 @@ initlock(struct spinlock *lk, char *name)
   lk->cpu = 0;
 }
 
+void
+initReentrantSpinlock (struct spinLockReentrant *lk, char *name) {
+  lk->pid = -1;
+  initlock(&(lk->sl), name);
+}
+
 // Acquire the lock.
 // Loops (spins) until the lock is acquired.
 // Holding a lock for a long time may cause
@@ -42,6 +48,30 @@ acquire(struct spinlock *lk)
   getcallerpcs(&lk, lk->pcs);
 }
 
+void
+acquireReentrant (struct spinLockReentrant* lk) {
+  pushcli(); // disable interrupts to avoid deadlock.
+  int proccessId = myproc()->pid;
+  if (holding(&(lk->sl)) && lk->pid == proccessId) {
+    popcli();
+    return;
+  }
+
+  // The xchg is atomic.
+  while(xchg(&((lk->sl).locked), 1) != 0)
+    ;
+
+  // Tell the C compiler and the processor to not move loads or stores
+  // past this point, to ensure that the critical section's memory
+  // references happen after the lock is acquired.
+  __sync_synchronize();
+
+  // Record info about lock acquisition for debugging.
+  (lk->sl).cpu = mycpu();
+  lk->pid = proccessId;
+  getcallerpcs(&lk, (lk->sl).pcs);  
+}
+
 // Release the lock.
 void
 release(struct spinlock *lk)
@@ -65,6 +95,29 @@ release(struct spinlock *lk)
   asm volatile("movl $0, %0" : "+m" (lk->locked) : );
 
   popcli();
+}
+
+void
+releaseReentrant(struct spinLockReentrant* lk) {
+  if(!holding(&(lk->sl)) || (lk->pid != myproc()->pid))
+    panic("release");
+
+  (lk->sl).pcs[0] = 0;
+  (lk->sl).cpu = 0;
+
+  // Tell the C compiler and the processor to not move loads or stores
+  // past this point, to ensure that all the stores in the critical
+  // section are visible to other cores before the lock is released.
+  // Both the C compiler and the hardware may re-order loads and
+  // stores; __sync_synchronize() tells them both not to.
+  __sync_synchronize();
+
+  // Release the lock, equivalent to lk->locked = 0.
+  // This code can't use a C assignment, since it might
+  // not be atomic. A real OS would use C atomics here.
+  asm volatile("movl $0, %0" : "+m" ((lk->sl).locked) : );
+
+  popcli();  
 }
 
 // Record the current call stack in pcs[] by following the %ebp chain.
@@ -123,4 +176,5 @@ popcli(void)
   if(mycpu()->ncli == 0 && mycpu()->intena)
     sti();
 }
+
 

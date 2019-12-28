@@ -9,3 +9,7 @@ struct spinlock {
                      // that locked the lock.
 };
 
+struct spinLockReentrant {
+  int pid;               // id of the proccess that locked the spin lock
+  struct spinlock sl;    // spin lock
+};

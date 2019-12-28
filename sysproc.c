@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "spinlock.h"
 
 int
 sys_fork(void)
@@ -88,4 +89,14 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int
+sys_acquireTest(void) {
+  struct spinLockReentrant lk;
+  initReentrantSpinlock(&lk, "splinlock");
+  acquireReentrant(&lk);
+  acquireReentrant(&lk);
+  releaseReentrant(&lk);
+  return 0;
 }
