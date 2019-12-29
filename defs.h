@@ -121,8 +121,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
-int             sleep_process(int);
-int             wakeup_process(int);
+int             barrier(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

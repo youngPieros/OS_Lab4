@@ -534,38 +534,25 @@ procdump(void)
 }
 
 
+int barrierProccessNumber;
+int barrierProccesCounter;
+int channel[1];
 
 int
-sleep_process(int pid)
+barrier(int proccessNumbers)
 {
-  struct proc *p;
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->pid == pid){
-      if(p->state == RUNNABLE)
-        p->state = SLEEPING;
-      release(&ptable.lock);
-      return 0;
-    }
+  barrierProccessNumber = proccessNumbers;
+  barrierProccesCounter ++;
+  if (barrierProccesCounter != barrierProccessNumber) {
+    acquire(&ptable.lock);
+    sleep(channel, &ptable.lock);
+    release(&ptable.lock);
   }
-  release(&ptable.lock);
-  return -1;
-}
+  else {
+    wakeup1(channel);
+    barrierProccesCounter = 0;
+  }
 
-int
-wakeup_process(int pid)
-{
-  struct proc *p;
-  acquire(&ptable.lock);
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->pid == pid){
-      if(p->state == SLEEPING)
-        p->state = RUNNABLE;
-      release(&ptable.lock);
-      return 0;
-    }
-  }
-  release(&ptable.lock);
-  return -1;
-}
+  return 0;
+}  
 
