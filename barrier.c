@@ -2,46 +2,32 @@
 #include "stat.h"
 #include "user.h"
 
-#define PROCESS_NUMBER 2
+#define PROCESS_NUMBER 5
 
 int main()
 {
-    int pid, pid2;
-
-    pid = fork();
-    if (pid > 0)
-    {
-        pid2 = fork(); 
-        if(pid2 == 0)
-        {
-            // int i ;
-            // int sum =0;
-            // for(i = 0; i < 90000; i++)
-            //     sum += i;
-            printf(1,"%d  vA %d aaaaaaaaaaaaaa\n");
-            printf(1,"%d  vA %d aaaaaaaaaaaaaa\n");
+    int pid, id, i, j, busyRate = 1, tempVar;
+    for (i = 0; i < PROCESS_NUMBER; i ++) {
+        pid = fork();
+        if (pid == 0) {
+            id = getpid();
+            printf(1, "proccess %d starts to proccessing\n", id);
+            tempVar = 0;
+            for (j = 0; j < busyRate; j++)
+                tempVar = tempVar + 1;
+            printf(1, "proccess %d waits for other process to arrive\n", id);
             barrier();
-            // sum =0;
-            // for(i = 0; i < 90000; i++)
-            //     sum += i;
-            printf(1,"%d  vA %d bbbbbbbbbbbbbb\n");
+            tempVar = 0;
+            for (j = 0; j < busyRate; j++)
+                tempVar = tempVar + 1;
+            printf(1, "proccess %d finished proccessing\n", id);
             exit();
         }
+        busyRate = busyRate * 10;
     }
-    if(pid == 0)
-    {
-        // int i;
-        // int sum =0;
-        // for(i = 0; i < 90000; i++)
-        //     sum += i;
-        printf(1,"%d  vA %d firessssssst\n");
-        barrier();
-        // sum =0;
-        // for(i = 0; i < 90000; i++)
-        //     sum += i;
-        printf(1,"%d  vA %d sssssssssssss\n");
-        exit();
-    }
-    wait();
-    wait();
+    for (i = 0; i < PROCESS_NUMBER; i++)
+        wait();
+    exit();
 }
+
+
